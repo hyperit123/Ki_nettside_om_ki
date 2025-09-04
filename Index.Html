@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="no" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KI‑guide – Interaktiv forklaring</title>
+  <!-- Tailwind (Play CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Ekstra styling for lysere tekst i dark mode spesielt i grafer */
+    body.dark-mode #utstyr, 
+    body.dark-mode #utstyr canvas, 
+    body.dark-mode #utstyr table {
+      color: #f5f5f5; /* Lys tekst */
+    }
+
+    body.dark-mode #utstyr canvas text, 
+    body.dark-mode #utstyr svg text {
+      fill: #ffffff !important; /* Helt hvit tekst */
+      stroke: none;
+    }
+
+    body.dark-mode #utstyr .chart-label,
+    body.dark-mode #utstyr td,
+    body.dark-mode #utstyr th {
+      color: #ffffff !important; /* Gjør tekst helt hvit for maksimal kontrast */
+    }
+
+    /* Sørg for at stolpediagram-navnene (AI-navnene) alltid tegnes hvite i dark mode */
+    body.dark-mode .bar-label {
+      color: #ffffff !important;
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: {} }
+    }
+  </script>
+  <!-- Lucide ikoner -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Små utils */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .glass { backdrop-filter: blur(8px); }
+  </style>
+</head>
+<body class="min-h-screen bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50 transition-colors">
+  <!-- Nav -->
+  <div id="nav" class="sticky top-0 z-40 glass bg-white/70 dark:bg-neutral-950/70 border-b border-black/5 dark:border-white/10">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3 justify-between">
+      <div class="flex items-center gap-2 font-semibold">
+        <i data-lucide="brain" class="w-5 h-5"></i>
+        <span>KI‑guide</span>
+      </div>
+      <nav class="hidden md:flex items-center gap-2 text-sm" id="top-links"></nav>
+      <button id="themeToggle" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10 transition">
+        <i data-lucide="sun" class="w-4 h-4"></i>
+        <div class="w-9 h-5 rounded-full relative bg-black/10 dark:bg-white/10">
+          <div id="toggleDot" class="absolute top-0.5 left-4 transition-all h-4 w-4 rounded-full bg-white dark:bg-neutral-800 shadow"></div>
+        </div>
+        <i data-lucide="moon" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="max-w-6xl mx-auto px-4 py-10">
+    <div class="grid md:grid-cols-2 gap-8 items-center">
+      <div>
+        <div class="inline-flex items-center gap-2 text-xs px-2 py-1 rounded-full bg-black/5 dark:bg-white/10 mb-3">
+          <span class="px-2 py-0.5 rounded-full text-xs bg-black/5 dark:bg-white/10">Nybegynner‑vennlig</span>
+          <span class="px-2 py-0.5 rounded-full text-xs bg-black/5 dark:bg-white/10">Visuelt</span>
+          <span class="px-2 py-0.5 rounded-full text-xs bg-black/5 dark:bg-white/10">Interaktivt</span>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-bold leading-tight">Forstå kunstig intelligens – på 10 minutter</h1>
+        <p class="mt-3 opacity-90">Utforsk hvordan KI faktisk fungerer, hva det brukes til, og hvilke ord som er nyttige å kunne. Scroll, trykk og lek deg frem – siden er laget for både nysgjerrige og nerder.</p>
+        <div class="mt-5 flex gap-3">
+          <a href="#hvordan" class="px-4 py-2 rounded-xl bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow">Kom i gang</a>
+          <a href="#utstyr" class="px-4 py-2 rounded-xl border hover:bg-black/5 dark:hover:bg-white/10">Se utstyr</a>
+        </div>
+      </div>
+      <div>
+        <div class="rounded-2xl shadow-lg border border-black/5 dark:border-white/10 bg-white dark:bg-neutral-900">
+          <div class="p-5 border-b border-black/5 dark:border-white/10 flex items-start justify-between">
+            <div>
+              <h3 class="font-semibold text-lg">Hvordan det funker</h3>
+              <p class="text-sm opacity-80 mt-1">En forenklet visualisering av et kunstig nevralt nettverk – prikker er nevroner, linjene er koblinger. Farger og tykkelse viser hvor sterkt signalet er over tid.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded-full text-xs bg-black/5 dark:bg-white/10">Interaktiv</span>
+              <button id="runToggle1" class="px-3 py-1.5 rounded-full text-sm border hover:bg-black/5 dark:hover:bg-white/10">Pause</button>
+            </div>
+          </div>
+          <div class="p-5">
+            <div class="flex items-center gap-3 text-sm mb-3">
+              <i data-lucide="info" class="w-4 h-4"></i>
+              <span>Når du trener en modell, justeres koblingene (vektene) slik at riktige mønstre forsterkes. Her ser du et dynamisk eksempel.</span>
+            </div>
+            <div class="flex items-center gap-3 mb-4">
+              <label class="text-sm">Antall nevroner per lag</label>
+              <input id="density1" type="range" min="6" max="28" value="18" class="w-48" />
+              <span id="densityVal1" class="text-sm opacity-80">18</span>
+            </div>
+            <div class="w-full rounded-xl overflow-hidden border border-black/5 dark:border-white/10">
+              <canvas id="canvas1" class="w-full block"></canvas>
+            </div>
+            <ul class="mt-4 grid md:grid-cols-3 gap-3 text-sm">
+              <li class="p-3 rounded-lg bg-black/5 dark:bg-white/10">Inndata → mellomlag → utdata</li>
+              <li class="p-3 rounded-lg bg-black/5 dark:bg-white/10">Aktiveringsmønstre = «forståelse»</li>
+              <li class="p-3 rounded-lg bg-black/5 dark:bg-white/10">Tilbakepropagering = læring</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Seksjon: Hvordan det funker -->
+    <section id="hvordan" class="scroll-mt-24 py-12">
+      <div class="max-w-6xl mx-auto px-4">
+        <div class="flex items-center gap-3 mb-6">
+          <i data-lucide="brain" class="w-6 h-6 opacity-80"></i>
+          <h2 class="text-2xl font-semibold">Hvordan det funker</h2>
+        </div>
+        <p class="text-sm opacity-80 mb-6 max-w-3xl">Et KI‑system består av mange sammenkoblede noder (nevroner) som justerer styrken på forbindelser for å gjenkjenne mønstre.</p>
+        <div class="rounded-2xl shadow-lg border border-black/5 dark:border-white/10 bg-white dark:bg-neutral-900">
+          <div class="p-5 border-b border-black/5 dark:border-white/10 flex items-start justify-between">
+            <div>
+              <h3 class="font-semibold text-lg">Hvordan det funker</h3>
+              <p class="text-sm opacity-80 mt-1">En forenklet visualisering av et kunstig nevralt nettverk – prikker er nevroner, linjene er koblinger.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded-full text-xs bg-black/5 dark:bg-white/10">Interaktiv</span>
+              <button id="runToggle2" class="px-3 py-1.5 rounded-full text-sm border hover:bg-black/5 dark:hover:bg-white/10">Pause</button>
+            </div>
+          </div>
+          <div class="p-5">
+            <div class="flex items-center gap-3 mb-4">
+              <label class="text-sm">Antall nevroner per lag</label>
+              <input id="density2" type="range" min="6" max="28" value="18" class="w-48" />
+              <span id="densityVal2" class="text-sm opacity-80">18</span>
+            </div>
+            <div class="w-full rounded-xl overflow-hidden border border-black/5 dark:border-white/10">
+              <canvas id="canvas2" class="w-full block"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Seksjon: Framtiden -->
+    <section id="framtiden" class="scroll-mt-24 py-12">
+      <div class="max-w-6xl mx-auto px-4">
+        <div class="flex items-center gap-3 mb-6">
+          <i data-lucide="zap" class="w-6 h-6 opacity-80"></i>
+          <h2 class="text-2xl font-semibold">Framtiden</h2>
+        </div>
+        <p class="text-sm opacity-80 mb-6 max-w-3xl">KI går raskt fra forskning til hverdagsverktøy. Tidslinjen viser milepæler og mulige steg fremover.</p>
+        <div class="rounded-2xl shadow-lg border border-black/5 dark:border-white/10 bg-white dark:bg-neutral-900">
+          <div class="p-5 border-b border-black/5 dark:border-white/10 flex items-start justify-between">
+            <div>
+              <h3 class="font-semibold text-lg">Framtiden</h3>
+              <p class="text-sm opacity-80 mt-1">Bla i tidslinjen for å se nøkkelepunkter i utviklingen – og noen kvalifiserte gjetninger framover.</p>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-xs bg-black/5 dark:bg-white/10">Scroll/Klikk</span>
+          </div>
+          <div class="p-5">
+            <div class="overflow-x-auto no-scrollbar">
+              <div class="relative min-w-[700px]">
+                <div class="h-1 bg-black/10 dark:bg-white/10 rounded-full my-6"></div>
+                <div id="timeline" class="flex justify-between -mt-8"></div>
+              </div>
+            </div>
+            <div class="mt-2">
+              <h4 id="tlTitle" class="font-semibold text-lg"></h4>
+              <p id="tlText" class="opacity-90 mt-1"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Seksjon: Treningsdata og lover -->
+    <section id="lover" class="scroll-mt-24 py-12">
+      <div class="max-w-6xl mx-auto px-4">
+        <div class="flex items-center gap-3 mb-6">
+          <i data-lucide="info" class="w-6 h-6 opacity-80"></i>
+          <h2 class="text-2xl font-semibold">Treningsdata og lover</h2>
+        </div>
+        <p class="text-sm opacity-80 mb-6 max-w-3xl">Teknologi må spille på lag med menneskerettigheter, personvern og opphavsrett. Klikk for korte forklaringer og eksempler.</p>
+        <div class="rounded-2xl shadow-lg border border-black/5 dark:border-white/10 bg-white dark:bg-neutral-900 p-5">
+          <div id="lawBoxes" class="grid gap-4"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Seksjon: Utstyr -->
+    <section id="utstyr" class="scroll-mt-24 py-12">
+      <div class="max-w-6xl mx-auto px-4">
+        <div class="flex items-center gap-3 mb-6">
+          <i data-lucide="cpu" class="w-6 h-6 opacity-80"></i>
+          <h2 class="text-2xl font-semibold">Utstyr</h2>
+        </div>
+        <p class="text-sm opacity-80 mb-6 max-w-3xl">Maskinvare og energibruk påvirker både ytelse, pris og miljøavtrykk. Tabellen og grafen er forenklede eksempler du kan oppdatere etter behov.</p>
+        <div class="rounded-2xl shadow-lg border border-black/5 dark:border-white/10 bg-white dark:bg-neutral-900">
+          <div class="p-5 border-b border-black/5 dark:border-white/10 flex items-start justify-between">
+            <div>
+              <h3 class="font-semibold text-lg">Utstyr</h3>
+              <p class="text-sm opacity-80 mt-1">Sammenligning av utstyr brukt av ulike KI‑systemer. Tallene er forenklede og kun illustrative.</p>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-xs bg-black/5 dark:bg-white/10">Interaktiv graf</span>
+          </div>
+          <div class="p-5">
+            <div class="overflow-x-auto">
+              <table class="min-w-[720px] w-full text-sm">
+                <thead>
+                  <tr class="text-left border-b border-black/10 dark:border-white/10">
+                    <th class="py-2">System</th>
+                    <th>Leverandør</th>
+                    <th>Generasjon</th>
+                    <th>GPU/Accelerator</th>
+                    <th>Energibruk*</th>
+                    <th>Topp effekt*</th>
+                  </tr>
+                </thead>
+                <tbody id="gearTable"></tbody>
+              </table>
+              <p class="text-xs opacity-70 mt-2">*Estimater for demo. Kilder og tall varierer med kluster, last og generasjon.</p>
+            </div>
+
+            <div class="mt-6 flex items-center gap-3">
+              <label class="text-sm">Vis i graf:</label>
+              <select id="metric" class="px-3 py-2 rounded-lg border bg-white dark:bg-neutral-900">
+                <option value="energi_kwh_per_mill">Energibruk (kWh/1M tokens)</option>
+                <option value="topp_effekt_kw">Topp effekt (kW)</option>
+              </select>
+            </div>
+
+            <div class="mt-4 h-72 border border-black/5 dark:border-white/10 rounded-xl overflow-hidden">
+              <canvas id="barChart" class="w-full h-full"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Seksjon: Ordliste -->
+    <section id="ordliste" class="scroll-mt-24 py-12">
+      <div class="max-w-6xl mx-auto px-4">
+        <div class="flex items-center gap-3 mb-6">
+          <i data-lucide="info" class="w-6 h-6 opacity-80"></i>
+          <h2 class="text-2xl font-semibold">Enkle begreper</h2>
+        </div>
+        <p class="text-sm opacity-80 mb-6 max-w-3xl">Rask ordliste med forklaringer. Hold musepekeren over (desktop) eller klikk for å utvide (mobil).</p>
+        <div id="glossary" class="grid md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="py-10 text-sm opacity-80">
+    <div class="max-w-6xl mx-auto px-4">
+      <p>Merk: Tall om energibruk/utstyr er illustrative. Oppdater med kilder for produksjonsbruk. Denne siden er laget for pedagogikk – ikke offisiell dokumentasjon.</p>
+      <p class="mt-2">© <span id="year"></span> KI‑guide</p>
+    </div>
+  </footer>
+
+  <script>
+    // ---------- Utils ----------
+    const sections = [
+      { id: 'hvordan', title: 'Hvordan det funker', icon: 'brain' },
+      { id: 'framtiden', title: 'Framtiden', icon: 'zap' },
+      { id: 'lover', title: 'Treningsdata og lover', icon: 'info' },
+      { id: 'utstyr', title: 'Utstyr', icon: 'cpu' },
+      { id: 'ordliste', title: 'Enkle begreper', icon: 'info' },
+    ];
+
+    function smoothLinks(){
+      const nav = document.getElementById('top-links');
+      sections.forEach(s=>{
+        const btn = document.createElement('a');
+        btn.href = '#' + s.id;
+        btn.className = 'px-3 py-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition';
+        btn.textContent = s.title;
+        nav.appendChild(btn);
+      });
+    }
+
+    function setupIntersection(){
+      const links = Array.from(document.querySelectorAll('#top-links a'));
+      const obs = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{
+          if(e.isIntersecting){
+            links.forEach(a=>a.classList.remove('bg-black/10','dark:bg-white/10'));
+            const active = links.find(a=> a.getAttribute('href') === '#' + e.target.id);
+            if(active) active.classList.add('bg-black/10','dark:bg-white/10');
+          }
+        })
+      }, { rootMargin: '-40% 0px -50% 0px', threshold: 0.01 });
+      sections.forEach(s=> obs.observe(document.getElementById(s.id)));
+    }
+
+    // ---------- Dark mode toggle ----------
+    const themeBtn = document.getElementById('themeToggle');
+    themeBtn.addEventListener('click', ()=>{
+      document.documentElement.classList.toggle('dark');
+      const dot = document.getElementById('toggleDot');
+      // flip dot
+      if(document.documentElement.classList.contains('dark')){ dot.style.left = '1rem'; }
+      else { dot.style.left = '0.125rem'; }
+    });
+
+    // ---------- Neural Canvas (two instances) ----------
+    function neuralCanvas(canvas, densityInput, densityLabel, toggleBtn){
+      let running = true;
+      let density = +densityInput.value;
+      const ctx = canvas.getContext('2d');
+      const DPR = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+      let layers = [];
+      let raf;
+
+      function resize(){
+        const rect = canvas.getBoundingClientRect();
+        const height = rect.width * 0.45;
+        canvas.style.height = height + 'px';
+        canvas.width = Math.floor(rect.width * DPR);
+        canvas.height = Math.floor(height * DPR);
+        init();
+      }
+
+      function init(){
+        const W = canvas.width, H = canvas.height;
+        layers = [];
+        const cols = 4;
+        const perCol = Math.max(6, Math.floor(density));
+        for(let c=0;c<cols;c++){
+          const x = (W/(cols-1))*c;
+          const nodes=[];
+          for(let i=0;i<perCol;i++){
+            const y = (H/(perCol+1))*(i+1) + (Math.sin((i+c)*1.3)*8*DPR);
+            nodes.push({x,y});
+          }
+          layers.push(nodes);
+        }
+      }
+
+      function draw(t){
+        const W = canvas.width, H = canvas.height;
+        ctx.clearRect(0,0,W,H);
+        // grid
+        ctx.globalAlpha = 0.08; ctx.strokeStyle = '#888';
+        for(let i=0;i<10;i++){
+          ctx.beginPath(); ctx.moveTo((W/10)*i,0); ctx.lineTo((W/10)*i,H); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(0,(H/10)*i); ctx.lineTo(W,(H/10)*i); ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+        // connections
+        layers.forEach((col, cIdx)=>{
+          const next = layers[cIdx+1]; if(!next) return;
+          col.forEach((n,i)=>{
+            next.forEach((m,j)=>{
+              const phase = (Math.sin((t/600)+(i*0.7)+(j*0.3))+1)/2; // 0..1
+              const width = 0.5 + phase*2; const hue = 200 + phase*80;
+              ctx.strokeStyle = `hsl(${hue} 80% 60%)`; ctx.globalAlpha = 0.25 + phase*0.6; ctx.lineWidth = width;
+              ctx.beginPath(); ctx.moveTo(n.x, n.y);
+              const cx = (n.x + m.x)/2;
+              ctx.quadraticCurveTo(cx, n.y + Math.sin((i+j)+t/400)*20, m.x, m.y);
+              ctx.stroke();
+            });
+          });
+        });
+        // nodes
+        const flat = layers.flat();
+        for(let k=0;k<flat.length;k++){
+          const n = flat[k];
+          const pulse = (Math.sin(t/300 + k)+1)/2;
+          ctx.fillStyle = `hsl(${180 + pulse*120} 85% ${55 + pulse*15}%)`;
+          ctx.beginPath(); ctx.arc(n.x, n.y, 3*DPR + pulse*1.2, 0, Math.PI*2); ctx.fill();
+        }
+        if(running) raf = requestAnimationFrame(draw);
+      }
+
+      function start(){ cancelAnimationFrame(raf); raf = requestAnimationFrame(draw); }
+      function stop(){ cancelAnimationFrame(raf); }
+
+      window.addEventListener('resize', resize);
+      resize(); start();
+
+      densityInput.addEventListener('input', e=>{
+        density = +e.target.value; densityLabel.textContent = density; init();
+      });
+      toggleBtn.addEventListener('click', ()=>{
+        running = !running; toggleBtn.textContent = running? 'Pause' : 'Spill av';
+        if(running) start(); else stop();
+      });
+    }
+
+    // ---------- Timeline ----------
+    const tlItems = [
+      { year: 1956, title: 'Dartmouth‑workshop', text: 'KI som forskningsfelt får navn.' },
+      { year: 2012, title: 'Dyp læring-boom', text: 'AlexNet viser styrken til nevrale nett.' },
+      { year: 2017, title: 'Transformer', text: '"Attention is All You Need" endrer spillet.' },
+      { year: 2022, title: 'Generativ KI', text: 'Tekst, bilder og kode – for alle.' },
+      { year: 2024, title: 'Agentiske systemer', text: 'Verktøybruk, minne og planlegging.' },
+      { year: 2027, title: 'Multimodal hverdags‑KI', text: 'Sømløs tale, syn, handling (estimat).' },
+      { year: 2030, title: 'Rimelig personlig KI', text: 'Lokale modeller og edge‑akseleratorer (estimat).'},
+    ];
+
+    function buildTimeline(){
+      const wrap = document.getElementById('timeline');
+      const title = document.getElementById('tlTitle');
+      const text = document.getElementById('tlText');
+      wrap.innerHTML = '';
+      tlItems.forEach((it, i)=>{
+        const btn = document.createElement('button');
+        btn.className = 'group flex flex-col items-center text-xs w-28';
+        btn.innerHTML = `<span class="w-3 h-3 rounded-full border-2 block ${i===4? 'bg-blue-500 border-blue-500':'border-black/40 dark:border-white/30 bg-white dark:bg-neutral-900'}"></span><span class="mt-2 opacity-80 group-hover:opacity-100 transition">${it.year}</span>`;
+        btn.addEventListener('click', ()=> select(i));
+        wrap.appendChild(btn);
+      });
+      select(4);
+      function select(idx){
+        Array.from(wrap.children).forEach((el, j)=>{
+          const dot = el.querySelector('span');
+          dot.className = 'w-3 h-3 rounded-full border-2 block ' + (j===idx? 'bg-blue-500 border-blue-500':'border-black/40 dark:border-white/30 bg-white dark:bg-neutral-900');
+        });
+        const sel = tlItems[idx]; title.textContent = sel.title; text.textContent = sel.text;
+      }
+    }
+
+    // ---------- Law boxes ----------
+    const lawData = [
+      { title: 'Hva er treningsdata?', brief: 'Eksempler modellen lærer fra.', body: 'Modeller lærer statistiske mønstre fra store tekst-, bilde- eller lydsamlinger. Kvalitet, representativitet og mangfold påvirker resultatet.' },
+      { title: 'Personvern', brief: 'GDPR og lagring av personopplysninger.', body: 'Personopplysninger krever lovlig grunnlag, formålsbegrensning og minimalt innsamlede data. Bruk helst anonymiserte eller syntetiske datasett når mulig.' },
+      { title: 'Opphavsrett', brief: 'Rettigheter til innhold brukt i trening.', body: 'Opphavsrett kan gjelde selv ved maskinlæring. Respekter lisensvilkår, bruk åpne lisenser der det er mulig, og vurder kompensasjon/opt‑out‑ordninger.' },
+      { title: 'Bias og rettferdighet', brief: 'Skjeve data → skjeve resultater.', body: 'Evaluer med mangfoldige tester, overvåk for diskriminerende mønstre, og juster med teknikker som re‑balansering, filtrering og etter‑kalibrering.' },
+      { title: 'Transparens', brief: 'Forklar hva modellen kan og ikke kan.', body: 'Gjør begrensninger og risiko synlige. Del evalueringsrapporter, datasammendrag (datakort) og brukerveiledning.' },
+    ];
+
+    function buildLaw(){
+      const wrap = document.getElementById('lawBoxes');
+      lawData.forEach(item=>{
+        const box = document.createElement('div');
+        box.className = 'rounded-xl border border-black/10 dark:border-white/10 overflow-hidden';
+        box.innerHTML = `
+          <button class="w-full text-left px-4 py-3 bg-black/5 dark:bg-white/10 flex items-center justify-between">
+            <div>
+              <h5 class="font-medium">${item.title}</h5>
+              <p class="text-sm opacity-80">${item.brief}</p>
+            </div>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+          <div class="p-4 text-sm hidden">${item.body}</div>
+        `;
+        const btn = box.querySelector('button');
+        const content = box.querySelector('div.p-4');
+        const icon = box.querySelector('[data-lucide]');
+        btn.addEventListener('click', ()=>{
+          content.classList.toggle('hidden');
+          icon.setAttribute('data-lucide', content.classList.contains('hidden')? 'chevron-right':'chevron-down');
+          lucide.createIcons();
+        });
+        wrap.appendChild(box);
+      });
+    }
+
+    // ---------- Gear table + bar chart ----------
+    const gearRaw = [
+      { name: 'ChatGPT', gpu: 'NVIDIA A100/H100 (varierer)', energi_kwh_per_mill: 25, topp_effekt_kw: 0.8, leverandor: 'OpenAI', generasjon: 'GPT‑4/5-ish' },
+      { name: 'Grok', gpu: 'NVIDIA H100', energi_kwh_per_mill: 22, topp_effekt_kw: 0.7, leverandor: 'xAI', generasjon: 'Grok‑2' },
+      { name: 'Gemini', gpu: 'TPU v4/v5e + H100 (blandet)', energi_kwh_per_mill: 18, topp_effekt_kw: 0.6, leverandor: 'Google', generasjon: '1.5 / Flash' },
+      { name: 'DeepSeek', gpu: 'H20/H100 (ryktes), lokale klynger', energi_kwh_per_mill: 16, topp_effekt_kw: 0.5, leverandor: 'DeepSeek', generasjon: 'R1' },
+    ];
+
+    function buildGear(){
+      const tbody = document.getElementById('gearTable');
+      tbody.innerHTML = '';
+      gearRaw.forEach(g=>{
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-black/5 dark:border-white/10';
+        tr.innerHTML = `
+          <td class="py-2 font-medium">${g.name}</td>
+          <td>${g.leverandor}</td>
+          <td>${g.generasjon}</td>
+          <td class="whitespace-pre-wrap">${g.gpu}</td>
+          <td>${g.energi_kwh_per_mill} kWh/1M tokens</td>
+          <td>${g.topp_effekt_kw} kW</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Simple bar chart renderer (Canvas API)
+    function renderBarChart(canvas, data){
+      const ctx = canvas.getContext('2d');
+      const DPR = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * DPR);
+      canvas.height = Math.floor(rect.height * DPR);
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0,0,W,H);
+      // axes
+      ctx.strokeStyle = 'rgba(128,128,128,0.3)';
+      ctx.lineWidth = 1 * DPR;
+      for(let i=0;i<=4;i++){
+        const y = (H-20*DPR) - (H-60*DPR)*(i/4);
+        ctx.beginPath(); ctx.moveTo(50*DPR, y); ctx.lineTo(W-20*DPR, y); ctx.stroke();
+      }
+      // bars
+      const marginL = 60*DPR, marginR = 20*DPR, marginB = 40*DPR, marginT = 20*DPR;
+      const plotW = W - marginL - marginR;
+      const plotH = H - marginT - marginB;
+      const max = Math.max(...data.map(d=>d.value)) * 1.1;
+      const bw = plotW / data.length * 0.6;
+      data.forEach((d, i)=>{
+        const x = marginL + (plotW / data.length) * i + (plotW/data.length - bw)/2;
+        const h = (d.value/max) * plotH;
+        const y = H - marginB - h;
+        // bar color (auto)
+        ctx.fillStyle = `hsl(${210 + i*20} 70% 55%)`;
+        ctx.fillRect(x, y, bw, h);
+        // label
+        ctx.fillStyle = getComputedStyle(document.documentElement).classList?.contains('dark')? '#fff' : '#111';
+        ctx.save();
+        ctx.scale(DPR, DPR);
+        ctx.fillStyle = getComputedStyle(document.documentElement).color;
+        ctx.textAlign = 'center'; ctx.font = '12px system-ui, sans-serif';
+        ctx.fillText(data[i].name, (x + bw/2)/DPR, (H - marginB + 16*DPR)/DPR);
+        ctx.restore();
+      });
+    }
+
+    function setupChart(){
+      const metricSel = document.getElementById('metric');
+      const canvas = document.getElementById('barChart');
+      function dataset(){
+        const key = metricSel.value;
+        return gearRaw.map(g=>({ name: g.name, value: g[key] }));
+      }
+      function draw(){ renderBarChart(canvas, dataset()); }
+      draw();
+      metricSel.addEventListener('change', draw);
+      window.addEventListener('resize', draw);
+    }
+
+    // ---------- Glossary ----------
+    const glossaryItems = [
+      { term: 'Nevralt nettverk', def: 'En modell bygget av lag av "nevroner" som kombinerer signaler for å gjenkjenne mønstre.' },
+      { term: 'Parameter', def: 'Et tall i modellen som justeres under trening. Store modeller har milliarder av dem.' },
+      { term: 'Trening', def: 'Prosessen der modellen lærer fra data ved å minimere feil.' },
+      { term: 'Inferens', def: 'Når modellen brukes til å lage et svar, en klassifisering eller en prediksjon.' },
+      { term: 'Prompt', def: 'Teksten/innsignalet du gir modellen for å styre svaret.' },
+      { term: 'Hallusinasjon', def: 'Et plausibelt, men feilaktig svar fra modellen.' },
+      { term: 'Bias', def: 'Systematiske skjevheter i data eller modell som kan gi urettferdige resultater.' },
+    ];
+
+    function buildGlossary(){
+      const wrap = document.getElementById('glossary');
+      glossaryItems.forEach(item=>{
+        const box = document.createElement('div');
+        box.className = 'group border border-black/10 dark:border-white/10 rounded-xl p-4 bg-white/50 dark:bg-neutral-900/60 hover:shadow transition';
+        box.innerHTML = `
+          <button class="w-full text-left flex items-center justify-between">
+            <span class="font-medium">${item.term}</span>
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+          <p class="text-sm mt-2 opacity-90 hidden md:hidden group-hover:block">${item.def}</p>
+        `;
+        const btn = box.querySelector('button');
+        const p = box.querySelector('p');
+        const icon = box.querySelector('[data-lucide]');
+        btn.addEventListener('click', ()=>{
+          p.classList.toggle('hidden');
+          icon.setAttribute('data-lucide', p.classList.contains('hidden')? 'chevron-right':'chevron-down');
+          lucide.createIcons();
+        });
+        wrap.appendChild(box);
+      });
+    }
+
+    // ---------- Init ----------
+    function init(){
+      smoothLinks(); setupIntersection();
+      lucide.createIcons();
+
+      // canvases
+      neuralCanvas(
+        document.getElementById('canvas1'),
+        document.getElementById('density1'),
+        document.getElementById('densityVal1'),
+        document.getElementById('runToggle1')
+      );
+      neuralCanvas(
+        document.getElementById('canvas2'),
+        document.getElementById('density2'),
+        document.getElementById('densityVal2'),
+        document.getElementById('runToggle2')
+      );
+
+      buildTimeline();
+      buildLaw();
+      buildGear();
+      setupChart();
+      buildGlossary();
+
+      document.getElementById('year').textContent = new Date().getFullYear();
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
